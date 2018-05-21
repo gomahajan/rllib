@@ -6,10 +6,12 @@ import numpy as np
 
 
 def plot(episode_lengths, rewards):
+    plt.figure(2)
+    plt.clf()
     plt.title('Training')
     plt.xlabel('Episode')
     plt.plot(episode_lengths)
-    plt.plot(rewards)
+    #plt.plot(rewards)
     plt.pause(0.001)
 
 

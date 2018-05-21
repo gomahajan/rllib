@@ -47,6 +47,18 @@ class Policy(nn.Module):
         return prob, h
 
 
+class Value(nn.Module):
+    def __init__(self, n, h1, k):
+        super(Value, self).__init__()
+        self.w1 = nn.Linear(n, h1)
+        self.w2 = nn.Linear(h1, k)
+        self.w3 = nn.Linear(k,1)
+
+    def forward(self, state):
+        h = self.w1(state)
+        out = self.w3(F.relu(self.w2(F.relu(h))))
+        return out
+
 def get_model():
     env = gym.make("Pong-v0")
     transform = PongTransform(n)
@@ -54,6 +66,7 @@ def get_model():
     pi = Policy(n, h1, k)
     init.xavier_uniform_(pi.w1.weight, gain=np.sqrt(2))
     init.xavier_uniform_(pi.w2.weight, gain=np.sqrt(2))
-    return env, transform, pi, action_bias
+    V = Value(n, h1, k)
+    return env, transform, pi, action_bias, V
 
 
