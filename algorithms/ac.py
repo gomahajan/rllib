@@ -6,7 +6,7 @@ import numpy as np
 from utils.debug import plot
 
 
-def sample(env, pi, transform, action_bias, render):
+def sample(env, pi, transform, action_bias, render, one_dim):
     states = []
     rewards = []
     logps = []
@@ -21,13 +21,13 @@ def sample(env, pi, transform, action_bias, render):
 
         # Get action
         state = torch.from_numpy(state).float().unsqueeze(0)
-        prob, value = pi(state)
-        m = Categorical(prob)
+        m, value = pi(state)
         action = m.sample()
         logps.append(m.log_prob(action))
         values.append(value.item())
 
-        observation, reward, done, _ = env.step(action.item() + action_bias)
+        a = action.item() if one_dim else action.data.numpy()
+        observation, reward, done, _ = env.step(a + action_bias)
         if render:
             env.render()
 
@@ -91,7 +91,7 @@ def learn_V(pi, optimizer, X, Y, steps):
 
 
 def actor_critic(env, transform, pi, optimizer, k, H, steps, render=False, batch_size=100, gamma=0.99, resume=False,
-                 data_dir='data/ac-training.pt', save_step=100, action_bias=0, debug=False, bggd=False):
+                 data_dir='data/ac-training.pt', save_step=100, action_bias=0, debug=False, bggd=False, one_dim=True):
     if resume:
         pi.load_state_dict(torch.load(data_dir))
 
@@ -103,7 +103,7 @@ def actor_critic(env, transform, pi, optimizer, k, H, steps, render=False, batch
     LP = []
     Vs = []
     for episode in count(1):
-        states, rewards, logps, values = sample(env, pi, transform, action_bias, render)
+        states, rewards, logps, values = sample(env, pi, transform, action_bias, render, one_dim)
         S.extend(states)
         LP.extend(logps)
         Vs.extend(values)

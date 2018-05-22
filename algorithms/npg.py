@@ -4,7 +4,7 @@ from itertools import count
 from utils.debug import plot
 
 def naive_policy_gradient(env, transform, pi, optimizer, render=False, batch_size=100, gamma=0.99, resume=False,
-                          data_dir='data/training.pt', save_step=100, action_bias=0, debug=False):
+                          data_dir='data/training.pt', save_step=100, action_bias=0, debug=False, one_dim=True):
     if resume:
         pi.load_state_dict(torch.load(data_dir))
 
@@ -25,14 +25,14 @@ def naive_policy_gradient(env, transform, pi, optimizer, render=False, batch_siz
 
             # Get action
             state = torch.from_numpy(state).float().unsqueeze(0)
-            prob, h = pi(state)
-            m = Categorical(prob)
+            m, h = pi(state)
             action = m.sample()
 
             # Save log probability for action
             saved_logp.append(m.log_prob(action))
 
-            observation, reward, done, _ = env.step(action.item() + action_bias)
+            a = action.item() if one_dim else action.data.numpy()
+            observation, reward, done, _ = env.step(a + action_bias)
             if render: env.render()
 
             if done:

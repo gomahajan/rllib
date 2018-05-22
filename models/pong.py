@@ -3,11 +3,13 @@ import torch.nn.functional as F
 import torch.nn.init as init
 import gym
 import numpy as np
+from torch.distributions import Categorical
 
 
 class PongTransform():
     def __init__(self, n):
         self.prev_o = np.zeros(n)
+
 
     def get_state(self, observation):
         curr_o = self._transform(observation)
@@ -37,7 +39,8 @@ class Policy(nn.Module):
         logp = self.w2(H)
         value = self.w3(H)
         prob = F.softmax(logp, dim=-1)
-        return prob, value
+        m = Categorical(prob)
+        return m, value
 
 
 def get_model():

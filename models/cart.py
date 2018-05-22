@@ -3,6 +3,7 @@ import torch.nn.functional as F
 import torch.nn.init as init
 import gym
 import numpy as np
+from torch.distributions import Categorical
 
 
 class CartTransform():
@@ -23,7 +24,8 @@ class Policy(nn.Module):
         logp = self.w2(H)
         value = self.w3(H)
         prob = F.softmax(logp, dim=-1)
-        return prob, value
+        m = Categorical(prob)
+        return m, value
 
 def get_model():
     env = gym.make("CartPole-v0")
