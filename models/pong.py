@@ -4,12 +4,6 @@ import torch.nn.init as init
 import gym
 import numpy as np
 
-# model parameters
-n = 80 * 80  # input dimension
-h1 = 200  # size of hidden layer
-k = 2
-action_bias = 2
-
 
 class PongTransform():
     def __init__(self, n):
@@ -32,41 +26,27 @@ class PongTransform():
 
 
 class Policy(nn.Module):
-    def __init__(self, n, h1, k):
+    def __init__(self):
         super(Policy, self).__init__()
-        self.w1 = nn.Linear(n, h1)
-        self.w2 = nn.Linear(h1, k)
-        self.saved_logp = []
-        self.saved_rewards = []
-        self.saved_penalty = []
+        self.w1 = nn.Linear(6400, 200)
+        self.w2 = nn.Linear(200, 2)
+        self.w3 = nn.Linear(200, 1)
 
     def forward(self, state):
-        h = self.w1(state)
-        logp = self.w2(F.relu(h))
-        prob = F.softmax(logp, dim=1)
-        return prob, h
+        H = F.relu(self.w1(state))
+        logp = self.w2(H)
+        value = self.w3(H)
+        prob = F.softmax(logp, dim=-1)
+        return prob, value
 
-
-class Value(nn.Module):
-    def __init__(self, n, h1, k):
-        super(Value, self).__init__()
-        self.w1 = nn.Linear(n, h1)
-        self.w2 = nn.Linear(h1, k)
-        self.w3 = nn.Linear(k,1)
-
-    def forward(self, state):
-        h = self.w1(state)
-        out = self.w3(F.relu(self.w2(F.relu(h))))
-        return out
 
 def get_model():
     env = gym.make("Pong-v0")
+    n = 80 * 80  # input dimension
+    action_bias = 2
     transform = PongTransform(n)
 
-    pi = Policy(n, h1, k)
+    pi = Policy()
     init.xavier_uniform_(pi.w1.weight, gain=np.sqrt(2))
     init.xavier_uniform_(pi.w2.weight, gain=np.sqrt(2))
-    V = Value(n, h1, k)
-    return env, transform, pi, action_bias, V
-
-
+    return env, transform, pi, action_bias
